@@ -21,9 +21,22 @@ let allPagesAreLoaded = false;
 let allCurrentEpisodes;
 let showName;
 let showNameText;
+let episodeBanner;
+let allShows;
+let shows;
+let SHOW_ID;
+let bannerName;
+let showFoundCounter;
+let singleShowDiv;
+let searchDiv;
+let currentEpisodeHeader;
+let showContainer;
+let searchedWord = "";
+let showLisIndex;
 
-function fetchSelectedShow(SHOW_ID) {
-	fetch("https://api.tvmaze.com/shows/" + SHOW_ID + "/episodes")
+function fetchSelectedShow(showIdNumber) {
+	//console.log("got to the fetch function");
+	fetch(`https://api.tvmaze.com/shows/${showIdNumber}/episodes`)
 		.then(function (response) {
 			return response.json();
 		})
@@ -34,26 +47,27 @@ function fetchSelectedShow(SHOW_ID) {
 			totalNumberOfEpisodes = allEpisodes.length;
 			makePageHeader(allEpisodes);
 			makePageForEpisodes(allEpisodes);
+			let bannerTitle = setBannerTitle(showIdNumber);
+			SHOW_ID = showIdNumber;
+			currentEpisodeHeader.innerHTML = bannerTitle;
+			console.log(bannerTitle);
 		})
 		.catch(function (error) {
-			console.log("could not fetch");
+			console.log(error);
 		});
 }
 
 function setup() {
-	fetchSelectedShow(83);
-	//	loadShowList();
+	loadAllShowList();
+	//fetchSelectedShow(82);
 }
 
 function makePageHeader(episodeList) {
-	//body.style.padding = "0";
-	//body.style.margin = "0";
 	if (searchFlag === false) {
 		searchFoundCounter = totalNumberOfEpisodes;
 	}
 	rootElem = document.getElementById("root");
 	header = document.createElement("header");
-
 	let showOptions = getAllShows();
 	showOptions.sort(function (a, b) {
 		return a.name.toLowerCase().localeCompare(b.name.toLowerCase());
@@ -62,17 +76,17 @@ function makePageHeader(episodeList) {
 	let buttonText = document.createTextNode("Return to All Show");
 	returnToAllShow.appendChild(buttonText);
 	returnToAllShow.setAttribute("id", "returnButton");
+	returnToAllShow.style.margin = "5%";
 	returnToAllShow.addEventListener("click", function () {
-		refreshHeader();
-		refreshPage();
-		loadShowList();
+		//===========================working fine
+		header.style.display = "none";
+		allEpisodeDiv.style.display = "none";
+		loadAllShowList();
 	});
-
 	header.appendChild(returnToAllShow);
 	let showSelector = document.createElement("select");
 	showSelector.setAttribute("id", "showMenu");
 	header.appendChild(showSelector);
-
 	let showOptionPrompt = document.createElement("option");
 	showOptionPrompt.id = "noShowSelected";
 	showOptionPrompt.value = "";
@@ -85,7 +99,6 @@ function makePageHeader(episodeList) {
 		showOption.text = showOptions[k].name;
 		showSelector.appendChild(showOption);
 	}
-
 	let episodeSelector = document.createElement("select");
 	episodeSelector.setAttribute("id", "dropMenu");
 	header.appendChild(episodeSelector);
@@ -101,15 +114,12 @@ function makePageHeader(episodeList) {
 		option.text = episodeCode(episodeList[i]) + " - " + episodeList[i].name;
 		episodeSelector.appendChild(option);
 	}
-
 	liveSearch = document.createElement("INPUT");
 	liveSearch.setAttribute("type", "search");
 	liveSearch.setAttribute("id", "searchEpisode");
 	header.appendChild(liveSearch);
-	//liveSearch.style.margin = "1% 1%";
 	liveSearch.placeholder = "Live Search";
 	searchResult = document.createElement("h3");
-
 	searchResult.innerText =
 		"Displaying " +
 		searchFoundCounter +
@@ -117,25 +127,22 @@ function makePageHeader(episodeList) {
 		totalNumberOfEpisodes +
 		" episodes ";
 	header.appendChild(searchResult);
-
 	rootElem.appendChild(header);
-	//header.style.height = "100%";
 	header.style.width = "100%";
 	header.style.display = "flex";
+	header.style.flexWrap = "wrap";
 	header.style.border = "none";
 	header.style.borderRadius = "0";
-	header.style.position = "fixed";
-	header.style.border = "0.05px solid #E8E8E8";
-
-	//header.style.marginBottom = "100px";
-	header.style.backgroundColor = "#E8E8E8";
-	searchResult.style.padding = "0";
 	document.body.style.padding = "0";
 	document.body.style.margin = "0";
+	header.style.position = "fixed";
+	//	header.style.border = "0.05px solid #E8E8E8";
+	header.style.backgroundColor = "#E8E8E8";
 
 	document
 		.getElementById("searchEpisode")
 		.addEventListener("search", function () {
+			// =============================== TBL@
 			if (document.getElementById("searchEpisode").value === "") {
 				if (!allPagesAreLoaded) {
 					searchFoundCounter = totalNumberOfEpisodes;
@@ -154,40 +161,62 @@ function makePageHeader(episodeList) {
 				}
 			}
 		});
-
-	header.style.justifyContent = "space-around";
 	liveSearch.style.maxHeight = "40%";
 	liveSearch.style.margin = "2%";
 	showSelector.style.maxHeight = "20%";
 	showSelector.style.margin = "2%";
 	episodeSelector.style.maxHeight = "20%";
 	episodeSelector.style.margin = "2%";
+	returnToAllShow;
+	returnToAllShow.style.maxHeight = "40%";
+	returnToAllShow.style.margin = "2%";
+	episodeBanner = document.createElement("div");
+	header.appendChild(episodeBanner);
+	episodeBanner.style.width = "100%";
+
+	episodeBanner.style.backgroundColor = "black";
+	episodeBanner.style.color = "white";
+	episodeBanner.style.maxHeight = "30%";
+
+	currentEpisodeHeader = document.createElement("h3");
+
+	currentEpisodeHeader.style.textAlign = "center";
+	currentEpisodeHeader.innerHTML = setBannerTitle(SHOW_ID);
+	episodeBanner.appendChild(currentEpisodeHeader);
 
 	document.getElementById("dropMenu").addEventListener("change", function () {
+		//============= working
 		let index = document.getElementById("dropMenu").selectedIndex;
-
-		revealDropDownSearch(episodeList[parseInt(index) - 1]);
-
-		/*  if (parseInt(index) === 0) {
-            console.log("got Here");
-
-            allEpisodeDiv.innerHTML = "";
-            makePageHeader(allCurrentEpisodes);
-            makePageForEpisodes(allCurrentEpisodes);
-        } else {
-            revealDropDownSearch(episodeList[parseInt(index) - 1]);
-        }*/
+		revealEpisodeSearch(episodeList[parseInt(index) - 1]);
 	});
-
 	document.getElementById("showMenu").addEventListener("change", function () {
+		//===============working
 		let showIndex = document.getElementById("showMenu").selectedIndex;
-		let SHOW_ID = showOptions[parseInt(showIndex) - 1].id;
+		let currentShowID = showOptions[parseInt(showIndex) - 1].id;
 
 		refreshHeader();
 		refreshPage();
-		fetchSelectedShow(SHOW_ID);
+		currentEpisodeHeader.innerHTML = setBannerTitle(currentShowID);
+
+		fetchSelectedShow(currentShowID);
 	});
 }
+function setBannerTitle(currentID) {
+	let allShow = getAllShows();
+	let temp;
+	allShow.forEach((element) => {
+		if (element.id === currentID) {
+			temp = element.name;
+		}
+	});
+	return temp;
+}
+
+function getCurrentShowName(currentID) {
+	return "Game of Thorn";
+}
+function updateEpisodeBanner() {}
+
 function episodeCode(currentEpisode) {
 	if (currentEpisode.season >= 10 && currentEpisode.number >= 10)
 		return `S${currentEpisode.season}E${currentEpisode.number}`;
@@ -199,74 +228,60 @@ function episodeCode(currentEpisode) {
 		return `S${currentEpisode.season}E0${currentEpisode.number}`;
 }
 function refreshPage() {
-	allEpisodeDiv.style.paddingTop = "0";
+	allEpisodeDiv.style.paddingTop = "0px";
 	allEpisodeDiv.innerHTML = "";
 	header.style.padding = "0";
 }
 function refreshHeader() {
-	allEpisodeDiv.style.paddingTop = "0";
+	//allEpisodeDiv.style.paddingTop = "0";
 	header.style.padding = "0";
 	header.innerHTML = "";
 	header.style.padding = "0";
 }
 
-function revealDropDownSearch(episode) {
-	//refreshHeader();
+function revealEpisodeSearch(episode) {
 	refreshPage();
-
-	header.style.padding = "0";
-
+	//header.style.padding = "0";
 	allEpisodeDiv = document.createElement("div");
+	allEpisodeDiv.style.paddingTop = "15%";
 	rootElem.appendChild(allEpisodeDiv);
-
 	searchResult.innerText =
 		"Displaying 1 / " + totalNumberOfEpisodes + " episodes ";
-
 	episodeDiv = document.createElement("div");
 	allEpisodeDiv.appendChild(episodeDiv);
-	episodeName = document.createElement("h3");
-
+	episodeName = document.createElement("h2");
 	episodeName.innerHTML = episode.name + " - " + episodeCode(episode);
-
 	episodeDiv.appendChild(episodeName);
 	episodeImage = document.createElement("img");
-	episodeImage.setAttribute("src", episode.image.medium);
-	episodeDiv.appendChild(episodeImage);
 
+	if (episode.image === null) {
+		episodeImage.setAttribute(
+			"src",
+			"https://epaper.tarunbharat.net/images/not_found.png"
+		);
+	} else {
+		episodeImage.setAttribute("src", episode.image.original);
+	}
+	//episodeImage.setAttribute("src", episode.image.original);
+	episodeImage.style.height = "40%";
+	episodeImage.style.width = "40%";
+	episodeDiv.appendChild(episodeImage);
 	episodeSummary = document.createElement("p");
 	episodeSummary.innerHTML = episode.summary;
-
+	episodeSummary.style.fontSize = "20px";
+	episodeSummary.style.margin = "0 25%";
 	episodeDiv.appendChild(episodeSummary);
-	episodeDiv.style.backgroundColor = "white";
-	episodeDiv.style.margin = "10px";
-	episodeDiv.style.marginLeft = "50px";
-	episodeDiv.style.marginTop = "70px";
-
-	//.style.backgroundColor = "green";
-
-	episodeDiv.style.width = "25%";
+	episodeDiv.style.width = "100%";
 	episodeDiv.style.display = "flex";
 	episodeDiv.style.flexDirection = "column";
 	episodeDiv.style.alignItems = "center";
-	episodeDiv.style.border = "2px solid grey	";
-
-	episodeName.style.border = "2px solid #BAC9A9";
 	episodeName.style.borderRadius = "10px";
-	episodeName.style.padding = "25px 0";
-
 	episodeName.style.width = "100%";
 	episodeName.style.textAlign = "center";
 	episodeName.style.boxShadow = "1px 2px 3px grey";
-	episodeImage.style.border = "2px solid grey";
-
-	episodeSummary.style.padding = "0 30px";
-
+	episodeDiv.style.boxShadow = "1px 2px 3px grey";
 	allEpisodeDiv.style.display = "flex";
 	allEpisodeDiv.style.flexWrap = "wrap";
-	allEpisodeDiv.style.backgroundColor = "#E8E8E8";
-	allEpisodeDiv.style.border = "2px solid #E8E8E8";
-
-	//allEpisodeDiv.style.backgroundColor = "#E8E8E8";
 	makePageFooter();
 }
 
@@ -277,30 +292,11 @@ function searchTheShowList() {
 	for (var i = 0; i < showOption.length; i++) {
 		let option = document.createElement("option");
 		option.value = showSelector[i];
-		option.text = showSelector[i].name;
+		option.text = showSelector[i].name + " -here";
 		episodeSelector.appendChild(option);
 	}
 }
-/*
-function searchTheDropList() {
-    let episodeSelector = document.createElement("select");
-    episodeSelector.setAttribute("id", "dropMenu");
-    header.appendChild(episodeSelector);
-    for (var i = 0; i < episodeList.length; i++) {
-        let option = document.createElement("option");
-        option.value = episodeList[i];
-        option.text = episodeCode(episodeList[i]) + " - " + episodeList[i].name;
-        episodeSelector.appendChild(option);
-    }
-}*/
-/*
-function loadAllEpisodes() {
-    const allEpisodes = getAllEpisodes();
-    totalNumberOfEpisodes = allEpisodes.length;
-    makePageHeader(allEpisodes);
-    makePageForEpisodes(allEpisodes);
-}
-*/
+
 function searchFunction(allEpisodes) {
 	searchFlag = true;
 	searchFoundCounter = 0;
@@ -321,15 +317,17 @@ function searchFunction(allEpisodes) {
 		totalNumberOfEpisodes +
 		" episodes ";
 
-	searchResult.style.visibility = "visible";
+	//searchResult.style.visibility = "visible";
 	refreshPage();
 	let currentSearch = searchWord.value.toLowerCase();
 	makePageForEpisodes(episodeFound, currentSearch);
 }
 
-function makePageForEpisodes(episodeList, keyWord) {
+function makePageForEpisodes(episodeList) {
 	allEpisodeDiv = document.createElement("div");
 	rootElem.appendChild(allEpisodeDiv);
+	allEpisodeDiv.style.paddingTop = "12%";
+
 	if (searchFlag === false) {
 		searchFoundCounter = totalNumberOfEpisodes;
 	}
@@ -348,7 +346,17 @@ function makePageForEpisodes(episodeList, keyWord) {
 		episodeName.innerHTML = element.name + " - " + episodeCode(element);
 
 		episodeImage = document.createElement("img");
-		episodeImage.setAttribute("src", element.image.medium);
+		if (element.image === null) {
+			episodeImage.setAttribute(
+				"src",
+				"https://epaper.tarunbharat.net/images/not_found.png"
+			);
+			episodeImage.style.maxHeight = "50%";
+			episodeImage.style.maxWidth = "50%";
+		} else {
+			episodeImage.setAttribute("src", element.image.medium);
+		}
+
 		episodeDiv.appendChild(episodeName);
 		episodeDiv.appendChild(episodeImage);
 
@@ -359,7 +367,7 @@ function makePageForEpisodes(episodeList, keyWord) {
 		episodeDiv.style.backgroundColor = "white";
 		episodeDiv.style.margin = "10px";
 		episodeDiv.style.marginLeft = "50px";
-		episodeDiv.style.marginTop = "50px";
+		//episodeDiv.style.marginTop = "50px";
 		episodeDiv.style.border = "2px solid #E8E8E8";
 
 		episodeDiv.style.width = "25%";
@@ -369,22 +377,21 @@ function makePageForEpisodes(episodeList, keyWord) {
 
 		episodeName.style.border = "1px solid #BAC9A9";
 		episodeName.style.borderRadius = "5px";
-		episodeName.style.paddingTop = "2px";
+		//episodeName.style.paddingTop = "2px";
 
 		episodeName.style.width = "100%";
 		episodeName.style.textAlign = "center";
 		episodeName.style.boxShadow = "1px 2px 3px grey";
-		episodeImage.style.border = "2px solid green";
+		//episodeImage.style.border = "2px solid green";
 
 		episodeSummary.style.padding = "0 30px";
+		episodeSummary.style.fontSize = "large";
 
 		allEpisodeDiv.style.display = "flex";
 		allEpisodeDiv.style.flexWrap = "wrap";
-		allEpisodeDiv.style.border = "0.05px solid black";
-		allEpisodeDiv.style.paddingTop = "30px";
 
 		allEpisodeDiv.style.backgroundColor = "#E8E8E8";
-		episodeDiv.style.marginTop = "50px";
+		//	episodeDiv.style.marginTop = "50px";
 	});
 	makePageFooter();
 }
@@ -408,107 +415,159 @@ function makePageFooter() {
 	pageFooter.style.backgroundColor = "grey";
 	pageFooter.style.color = "white";
 
-	header.style.justifyContent = "space-around";
-
-	//liveSearch.style.maxHeight = "40%";
-	//liveSearch.style.marginTop = "2%";
-	//episodeSelector.style.maxHeight = "40%";
-	//episodeSelector.style.marginTop = "2%";
-
-	//searchResult.style.marginRight = "25%";
+	//header.style.justifyContent = "space-around";
 }
+//|====================================================================================|\\
+// | 								SHOW SECTION										  | \\
+//  |====================================================================================|  \\
 
-function loadShowList() {
-	//document.body.innerHTML = "";
+function loadAllShowList() {
+	allShows = getAllShows();
+	loadShowList(allShows);
+}
+function refreshShow() {}
 
+function loadShowList(shows) {
+	refreshShow();
 	let numberOfShowsFound = 0;
-	let allShows = getAllShows();
-	let searchDiv = document.createElement("div");
-
+	searchDiv = document.createElement("div");
 	searchDiv.style.display = "flex";
+	searchDiv.style.display = "fixed";
+	document.body.style.padding = "0";
+	document.body.style.margin = "0";
 	searchDiv.style.width = "100%";
 	searchDiv.style.backgroundColor = "#E8E8E8";
 	searchDiv.style.justifyContent = "space-around";
-	searchDiv.style.padding = "5% 5%";
+
+	searchDiv.style.padding = "0";
+	searchDiv.style.position = "fixed";
+	//searchDiv.style.padding = "0";
+
 	//searchDiv.style.boxShadow = "1px 2px 3px grey";
 	searchDiv.style.border = "0.5px solid #E8E8E8";
-
 	searchDiv.setAttribute("id", "searchSowDiv");
 	let filterLabel = document.createElement("h3");
 	filterLabel.innerHTML = "Filtering For:";
 	searchDiv.appendChild(filterLabel);
-
 	let showSearch = document.createElement("INPUT");
 	showSearch.setAttribute("type", "search");
-	showSearch.setAttribute("id", "searchEpisode");
+	showSearch.setAttribute("id", "searchShow");
 	showSearch.setAttribute("placeHolder", "Enter Your Search ");
+	showSearch.style.margin = "3% 0";
 	searchDiv.appendChild(showSearch);
+	let foundLabel = document.createElement("h3");
+	foundLabel.innerText =
+		"Found " + shows.length + " " + searchedWord + " shows";
+	showSearch.addEventListener("search", function () {
+		searchedWord = document.getElementById("searchShow").value;
 
-	let foundLabel = document.createElement("p5");
-	foundLabel.innerHTML = "found " + numberOfShowsFound + " shows";
-	foundLabel.style.display = "none";
+		searchShowList();
+	});
+
 	searchDiv.appendChild(foundLabel);
 
 	let showSelectorResult = document.createElement("select");
 	showSelectorResult.setAttribute("id", "showList");
+	showSelectorResult.style.margin = "3% 0";
 	searchDiv.appendChild(showSelectorResult);
-	for (var i = 0; i < allShows.length; i++) {
+	shows.sort(function (a, b) {
+		return a.name.toLowerCase().localeCompare(b.name.toLowerCase());
+	});
+
+	for (var i = 0; i < shows.length; i++) {
 		let options = document.createElement("option");
-		options.id = allShows[i].id;
-		options.value = allShows[i];
-		options.text = allShows[i].name;
+		options.id = shows[i].id;
+		options.value = shows[i];
+		options.text = shows[i].name;
 		showSelectorResult.appendChild(options);
 	}
-	searchDiv.appendChild(showSelectorResult);
-	document.body.appendChild(searchDiv);
+	//=============================================================================
+	showSelectorResult.addEventListener("change", function () {
+		showLisIndex = document.getElementById("showList").selectedIndex;
+		let selectedShow = shows[parseInt(showLisIndex)].id;
 
-	allShows.forEach((element) => {
-		let singleShowDiv = document.createElement("div");
+		console.log("got to the show list");
+		console.log(selectedShow);
+		showContainer.style.display = "none";
+		searchDiv.style.display = "none";
+		fetchSelectedShow(selectedShow);
+	});
+	//=====================================================================================
+	searchDiv.appendChild(showSelectorResult);
+	//document.body.appendChild(searchDiv);
+	showContainer = document.createElement("div");
+	shows.forEach((element) => {
+		singleShowDiv = document.createElement("div");
 
 		singleShowDiv.style.boxShadow = "10px 20px 30px grey";
 		singleShowDiv.style.border = "1px solid #E8E8E8";
 		singleShowDiv.style.backgroundColor = " #E8E8E8";
-		showName = document.createElement("h1");
 
-		showName.innerHTML = element.name;
+		showName = document.createElement("A");
+		let showLinkName = document.createTextNode(element.name);
+		//let showLinkName = document.createTextNode(element.name);
+		showName.setAttribute("href", "#");
+		showName.appendChild(showLinkName);
+		showName.style.textDecoration = "none";
+		showName.style.color = "#B0271F";
+		showName.style.fontWeight = "700";
+		showName.style.fontSize = "25px";
 
-		showName.setAttribute("id", element.id);
-		//showName.setAttribute("value", element);
+		//	showName.innerHTML = element.name;
 
+		//showName.setAttribute("id", element.id);
+		//showName.style.border = "1px solid black";
+		showName.style.margin = "0 25%";
+		//singleShowDiv.style.border = "0.5px solid #E8E8E8";
+		singleShowDiv.style.borderRadius = "12px";
 		singleShowDiv.appendChild(showName);
-		showName.addEventListener("click", function () {
-			showTheEpisodes(element.id);
-		});
-		showName.addEventListener("mouseover", function () {
-			changNameColor();
-		});
-		showName.addEventListener("click", function () {
-			showTheEpisodes(element.id);
-		});
+		singleShowDiv.style.paddingTop = "5%";
+		showContainer.style.display = "flex";
+		showContainer.style.flexDirection = "column";
+		//showContainer.style.backgroundColor = "green";
+		showContainer.style.padding = "0";
 
-		//document.getElementById("h1").addEventListener("change", function () {
-		//fetchSelectedShow(167);
-		//});
+		showContainer.appendChild(searchDiv);
+		showContainer.appendChild(singleShowDiv);
 
+		function fetchShow() {
+			showContainer.style.display = "none";
+			//searchDiv.style.display = "none";
+			console.log(element.id);
+			fetchSelectedShow(element.id);
+		}
+		//================================================================================================
+		showName.addEventListener("click", function () {
+			showContainer.style.display = "none";
+			//searchDiv.style.display = "none";
+			console.log(element.id);
+			fetchSelectedShow(element.id);
+		});
+		//==========================================================================================================
 		let infoDiv = document.createElement("div");
 		singleShowDiv.appendChild(infoDiv);
-
+		infoDiv.style.borderRadius = "15px";
 		let showImage = document.createElement("img");
-		showImage.setAttribute("src", element.image.medium);
-		showImage.style.padding = "3%";
+		if (element.image === null) {
+			showImage.setAttribute(
+				"src",
+				"https://epaper.tarunbharat.net/images/not_found.png"
+			);
+		} else {
+			showImage.setAttribute("src", element.image.medium);
+		}
+
+		//showImage.style.padding = "3%";
 		infoDiv.appendChild(showImage);
 
 		let showSummary = document.createElement("p");
 		showSummary.innerHTML = element.summary;
-		showSummary.style.padding = "2%";
+		showSummary.style.marginRight = "10%";
 		infoDiv.appendChild(showSummary);
 		let showInfo = document.createElement("div");
-		showInfo.style.display = "flex";
-		showInfo.style.flexDirection = "column";
-		showInfo.style.padding = "2%";
-		showInfo.style.border = "0.5px solid #E8E8E8";
-		let showGenres = document.createElement("h3");
-		showGenres.innerHTML = "Genres: " + element.genres.join("|");
+		showInfo.style.width = "150%";
+		let showGenres = document.createElement("h4");
+		showGenres.innerHTML = "Genres: " + element.genres.join(" | ");
 		showInfo.appendChild(showGenres);
 		let showStatus = document.createElement("h3");
 		showStatus.innerHTML = "status: " + element.status;
@@ -522,9 +581,11 @@ function loadShowList() {
 		infoDiv.style.display = "flex";
 		infoDiv.style.justifyContent = "space-around";
 		infoDiv.style.boxShadow = "1px 2px 3px grey";
+		infoDiv.style.margin = "0 20%";
+		//	infoDiv.style.border = "1px solid black";
 
 		infoDiv.appendChild(showInfo);
-		document.body.appendChild(singleShowDiv);
+		document.body.appendChild(showContainer);
 		/*
 		showName.addEventListener("onmouseover", function () {
 			singleShowDiv.style.color = "red";
@@ -540,11 +601,36 @@ function loadShowList() {
 		document.getElementsByTagName("h1").style.cursor = "pointer";
 	}
 	function showTheEpisodes(id) {
-		fetchSelectedShow(id);
 		//console.log(id);
 		//document.body.style.backgroundColor = "pink";
 	}
-	document.getElementById(82).style.color = "pink";
 }
+
+function searchShowList() {
+	showFoundCounter = 0;
+	let showFound = [];
+	let showSearchWord = document.getElementById("searchShow");
+
+	allShows.forEach((element, index) => {
+		if (
+			element.name.toLowerCase().includes(showSearchWord.value.toLowerCase()) ||
+			element.genres.forEach((item) => {
+				if (item.toLowerCase().includes(showSearchWord.value.toLowerCase())) {
+					showFoundCounter++;
+					showFound.push(allShows[index]);
+				}
+			})
+		) {
+			showFoundCounter++;
+			showFound.push(allShows[index]);
+		}
+	});
+	console.log(showFound.length);
+
+	showContainer.style.display = "none";
+	searchDiv.style.display = "none";
+	loadShowList(showFound);
+}
+function loadTheSearchedShow(showList) {}
 
 window.onload = setup;
