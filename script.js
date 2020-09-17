@@ -33,6 +33,7 @@ let currentEpisodeHeader;
 let showContainer;
 let searchedWord = "";
 let showLisIndex;
+let showSearchMode = false;
 
 function fetchSelectedShow(showIdNumber) {
 	//console.log("got to the fetch function");
@@ -79,8 +80,13 @@ function makePageHeader(episodeList) {
 	returnToAllShow.style.margin = "5%";
 	returnToAllShow.addEventListener("click", function () {
 		//===========================working fine
+
+		if (searchedWord.length > 1 && searchMode === false) {
+			searchedWord = "";
+		}
 		header.style.display = "none";
 		allEpisodeDiv.style.display = "none";
+
 		loadAllShowList();
 	});
 	header.appendChild(returnToAllShow);
@@ -439,7 +445,7 @@ function loadShowList(shows) {
 	searchDiv.style.backgroundColor = "#E8E8E8";
 	searchDiv.style.justifyContent = "space-around";
 
-	searchDiv.style.padding = "0";
+	searchDiv.style.paddingTop = "0";
 	searchDiv.style.position = "fixed";
 	//searchDiv.style.padding = "0";
 
@@ -447,6 +453,7 @@ function loadShowList(shows) {
 	searchDiv.style.border = "0.5px solid #E8E8E8";
 	searchDiv.setAttribute("id", "searchSowDiv");
 	let filterLabel = document.createElement("h3");
+	filterLabel.style.margin = "3% 0 3% 40%";
 	filterLabel.innerHTML = "Filtering For:";
 	searchDiv.appendChild(filterLabel);
 	let showSearch = document.createElement("INPUT");
@@ -456,6 +463,7 @@ function loadShowList(shows) {
 	showSearch.style.margin = "3% 0";
 	searchDiv.appendChild(showSearch);
 	let foundLabel = document.createElement("h3");
+	foundLabel.style.margin = "3% 0";
 	foundLabel.innerText =
 		"Found " + shows.length + " " + searchedWord + " shows";
 	showSearch.addEventListener("search", function () {
@@ -486,7 +494,7 @@ function loadShowList(shows) {
 		showLisIndex = document.getElementById("showList").selectedIndex;
 		let selectedShow = shows[parseInt(showLisIndex)].id;
 
-		console.log("got to the show list");
+		//	console.log("got to the show list");
 		console.log(selectedShow);
 		showContainer.style.display = "none";
 		searchDiv.style.display = "none";
@@ -517,11 +525,11 @@ function loadShowList(shows) {
 
 		//showName.setAttribute("id", element.id);
 		//showName.style.border = "1px solid black";
-		showName.style.margin = "0 25%";
+		showName.style.margin = "5% 20%";
 		//singleShowDiv.style.border = "0.5px solid #E8E8E8";
 		singleShowDiv.style.borderRadius = "12px";
 		singleShowDiv.appendChild(showName);
-		singleShowDiv.style.paddingTop = "5%";
+		singleShowDiv.style.paddingTop = "8%";
 		showContainer.style.display = "flex";
 		showContainer.style.flexDirection = "column";
 		//showContainer.style.backgroundColor = "green";
@@ -557,12 +565,12 @@ function loadShowList(shows) {
 			showImage.setAttribute("src", element.image.medium);
 		}
 
-		//showImage.style.padding = "3%";
+		showImage.style.borderRadius = "10px";
 		infoDiv.appendChild(showImage);
 
 		let showSummary = document.createElement("p");
 		showSummary.innerHTML = element.summary;
-		showSummary.style.marginRight = "10%";
+		showSummary.style.margin = "0 10%";
 		infoDiv.appendChild(showSummary);
 		let showInfo = document.createElement("div");
 		showInfo.style.width = "150%";
