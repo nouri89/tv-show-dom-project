@@ -33,7 +33,6 @@ let currentEpisodeHeader;
 let showContainer;
 let searchedWord = "";
 let showLisIndex;
-let showSearchMode = false;
 
 function fetchSelectedShow(showIdNumber) {
 	//console.log("got to the fetch function");
@@ -73,24 +72,19 @@ function makePageHeader(episodeList) {
 	showOptions.sort(function (a, b) {
 		return a.name.toLowerCase().localeCompare(b.name.toLowerCase());
 	});
-	let returnToAllShow = document.createElement("button");
+	let returnToAllShow = document.createElement("button"); //------------------------------------------1
 	let buttonText = document.createTextNode("Return to All Show");
 	returnToAllShow.appendChild(buttonText);
 	returnToAllShow.setAttribute("id", "returnButton");
 	returnToAllShow.style.margin = "5%";
 	returnToAllShow.addEventListener("click", function () {
 		//===========================working fine
-
-		if (searchedWord.length > 1 && searchMode === false) {
-			searchedWord = "";
-		}
 		header.style.display = "none";
 		allEpisodeDiv.style.display = "none";
-
 		loadAllShowList();
 	});
 	header.appendChild(returnToAllShow);
-	let showSelector = document.createElement("select");
+	let showSelector = document.createElement("select"); //---------------------------------------------------2
 	showSelector.setAttribute("id", "showMenu");
 	header.appendChild(showSelector);
 	let showOptionPrompt = document.createElement("option");
@@ -105,7 +99,7 @@ function makePageHeader(episodeList) {
 		showOption.text = showOptions[k].name;
 		showSelector.appendChild(showOption);
 	}
-	let episodeSelector = document.createElement("select");
+	let episodeSelector = document.createElement("select"); //-----------------------------------------------3
 	episodeSelector.setAttribute("id", "dropMenu");
 	header.appendChild(episodeSelector);
 	let optionPrompt = document.createElement("option");
@@ -120,12 +114,12 @@ function makePageHeader(episodeList) {
 		option.text = episodeCode(episodeList[i]) + " - " + episodeList[i].name;
 		episodeSelector.appendChild(option);
 	}
-	liveSearch = document.createElement("INPUT");
+	liveSearch = document.createElement("INPUT"); //---------------------------------------------------------4
 	liveSearch.setAttribute("type", "search");
 	liveSearch.setAttribute("id", "searchEpisode");
 	header.appendChild(liveSearch);
 	liveSearch.placeholder = "Live Search";
-	searchResult = document.createElement("h3");
+	searchResult = document.createElement("h3"); //----------------------------------------------------------5
 	searchResult.innerText =
 		"Displaying " +
 		searchFoundCounter +
@@ -149,22 +143,18 @@ function makePageHeader(episodeList) {
 		.getElementById("searchEpisode")
 		.addEventListener("search", function () {
 			// =============================== TBL@
+			console.log(document.getElementById("searchEpisode").value);
+
 			if (document.getElementById("searchEpisode").value === "") {
-				if (!allPagesAreLoaded) {
-					searchFoundCounter = totalNumberOfEpisodes;
-					refreshHeader();
-					refreshPage();
-					loadAllEpisodes();
-					searchMode = false;
-					allPagesAreLoaded = true;
-				} else {
-					allPagesAreLoaded = false;
-				}
+				searchFoundCounter = totalNumberOfEpisodes;
+				refreshHeader();
+				refreshPage();
+				setup();
+				searchMode = false;
+				allPagesAreLoaded = true;
 			} else {
-				if (!searchMode) {
-					searchFunction(episodeList);
-					searchMode = true;
-				}
+				searchFunction(episodeList);
+				searchMode = true;
 			}
 		});
 	liveSearch.style.maxHeight = "40%";
@@ -193,6 +183,7 @@ function makePageHeader(episodeList) {
 	document.getElementById("dropMenu").addEventListener("change", function () {
 		//============= working
 		let index = document.getElementById("dropMenu").selectedIndex;
+		console.log("episodeSearch drop Menu");
 		revealEpisodeSearch(episodeList[parseInt(index) - 1]);
 	});
 	document.getElementById("showMenu").addEventListener("change", function () {
@@ -266,11 +257,11 @@ function revealEpisodeSearch(episode) {
 			"https://epaper.tarunbharat.net/images/not_found.png"
 		);
 	} else {
-		episodeImage.setAttribute("src", episode.image.original);
+		episodeImage.setAttribute("src", episode.image.medium);
 	}
-	//episodeImage.setAttribute("src", episode.image.original);
-	episodeImage.style.height = "40%";
-	episodeImage.style.width = "40%";
+	//episodeImage.setAttribute("src", episode.image.medium);
+	episodeImage.style.height = "50%";
+	episodeImage.style.width = "50%";
 	episodeDiv.appendChild(episodeImage);
 	episodeSummary = document.createElement("p");
 	episodeSummary.innerHTML = episode.summary;
@@ -309,13 +300,18 @@ function searchFunction(allEpisodes) {
 	searchWord = document.getElementById("searchEpisode");
 	allEpisodes.forEach((element, index) => {
 		if (
-			element.name.toLowerCase().includes(searchWord.value.toLowerCase()) ||
-			element.summary.toLowerCase().includes(searchWord.value.toLowerCase())
+			element.name.toLowerCase().search(searchWord.value.toLowerCase()) >= 0 ||
+			element.summary.toLowerCase().search(searchWord.value.toLowerCase()) >= 0
 		) {
+			console.log("searchfound");
 			searchFoundCounter++;
 			episodeFound.push(allEpisodes[index]);
 		}
 	});
+	if (episodeFound.length === 0) {
+		currentEpisodeHeader.innerHTML = "No result found";
+	}
+	console.log(episodeFound.length + " all Episodes length");
 	searchResult.innerHTML =
 		"Displaying " +
 		searchFoundCounter +
@@ -343,63 +339,75 @@ function makePageForEpisodes(episodeList) {
 		" / " +
 		totalNumberOfEpisodes +
 		" episodes ";
-
-	episodeList.forEach((element) => {
+	if (episodeList.length === 0) {
 		episodeDiv = document.createElement("div");
 		allEpisodeDiv.appendChild(episodeDiv);
-		episodeName = document.createElement("h3");
-
-		episodeName.innerHTML = element.name + " - " + episodeCode(element);
-
 		episodeImage = document.createElement("img");
-		if (element.image === null) {
-			episodeImage.setAttribute(
-				"src",
-				"https://epaper.tarunbharat.net/images/not_found.png"
-			);
-			episodeImage.style.maxHeight = "50%";
-			episodeImage.style.maxWidth = "50%";
-		} else {
-			episodeImage.setAttribute("src", element.image.medium);
-		}
+		episodeImage.setAttribute(
+			"src",
+			"https://static.dribbble.com/users/1554526/screenshots/3399669/no_results_found.png"
+		);
+		allEpisodeDiv.appendChild(episodeImage);
+		episodeImage.style.marginLeft = "25%";
+		return;
+	} else {
+		episodeList.forEach((element) => {
+			episodeDiv = document.createElement("div");
+			allEpisodeDiv.appendChild(episodeDiv);
+			episodeName = document.createElement("h3");
 
-		episodeDiv.appendChild(episodeName);
-		episodeDiv.appendChild(episodeImage);
+			episodeName.innerHTML = element.name + " - " + episodeCode(element);
 
-		episodeSummary = document.createElement("p");
-		episodeSummary.innerHTML = element.summary;
+			episodeImage = document.createElement("img");
+			if (element.image === null) {
+				episodeImage.setAttribute(
+					"src",
+					"https://epaper.tarunbharat.net/images/not_found.png"
+				);
+				episodeImage.style.maxHeight = "50%";
+				episodeImage.style.maxWidth = "50%";
+			} else {
+				episodeImage.setAttribute("src", element.image.medium);
+			}
 
-		episodeDiv.appendChild(episodeSummary);
-		episodeDiv.style.backgroundColor = "white";
-		episodeDiv.style.margin = "10px";
-		episodeDiv.style.marginLeft = "50px";
-		//episodeDiv.style.marginTop = "50px";
-		episodeDiv.style.border = "2px solid #E8E8E8";
+			episodeDiv.appendChild(episodeName);
+			episodeDiv.appendChild(episodeImage);
 
-		episodeDiv.style.width = "25%";
-		episodeDiv.style.display = "flex";
-		episodeDiv.style.flexDirection = "column";
-		episodeDiv.style.alignItems = "center";
+			episodeSummary = document.createElement("p");
+			episodeSummary.innerHTML = element.summary;
 
-		episodeName.style.border = "1px solid #BAC9A9";
-		episodeName.style.borderRadius = "5px";
-		//episodeName.style.paddingTop = "2px";
+			episodeDiv.appendChild(episodeSummary);
+			episodeDiv.style.backgroundColor = "white";
+			episodeDiv.style.margin = "10px";
+			episodeDiv.style.marginLeft = "50px";
+			//episodeDiv.style.marginTop = "50px";
+			episodeDiv.style.border = "2px solid #E8E8E8";
 
-		episodeName.style.width = "100%";
-		episodeName.style.textAlign = "center";
-		episodeName.style.boxShadow = "1px 2px 3px grey";
-		//episodeImage.style.border = "2px solid green";
+			episodeDiv.style.width = "25%";
+			episodeDiv.style.display = "flex";
+			episodeDiv.style.flexDirection = "column";
+			episodeDiv.style.alignItems = "center";
 
-		episodeSummary.style.padding = "0 30px";
-		episodeSummary.style.fontSize = "large";
+			episodeName.style.border = "1px solid #BAC9A9";
+			episodeName.style.borderRadius = "5px";
+			//episodeName.style.paddingTop = "2px";
 
-		allEpisodeDiv.style.display = "flex";
-		allEpisodeDiv.style.flexWrap = "wrap";
+			episodeName.style.width = "100%";
+			episodeName.style.textAlign = "center";
+			episodeName.style.boxShadow = "1px 2px 3px grey";
+			//episodeImage.style.border = "2px solid green";
 
-		allEpisodeDiv.style.backgroundColor = "#E8E8E8";
-		//	episodeDiv.style.marginTop = "50px";
-	});
-	makePageFooter();
+			episodeSummary.style.padding = "0 30px";
+			episodeSummary.style.fontSize = "large";
+
+			allEpisodeDiv.style.display = "flex";
+			allEpisodeDiv.style.flexWrap = "wrap";
+
+			allEpisodeDiv.style.backgroundColor = "#E8E8E8";
+			//	episodeDiv.style.marginTop = "50px";
+		});
+		makePageFooter();
+	}
 }
 
 function makePageFooter() {
@@ -464,11 +472,13 @@ function loadShowList(shows) {
 	searchDiv.appendChild(showSearch);
 	let foundLabel = document.createElement("h3");
 	foundLabel.style.margin = "3% 0";
+	let currentSearchedWord = "";
 	foundLabel.innerText =
-		"Found " + shows.length + " " + searchedWord + " shows";
+		"Found " + shows.length + " " + currentSearchedWord + " shows";
 	showSearch.addEventListener("search", function () {
-		searchedWord = document.getElementById("searchShow").value;
-
+		searchedWord = currentSearchedWord = document.getElementById("searchShow")
+			.value;
+		//showSearchMode = true;
 		searchShowList();
 	});
 
@@ -594,16 +604,6 @@ function loadShowList(shows) {
 
 		infoDiv.appendChild(showInfo);
 		document.body.appendChild(showContainer);
-		/*
-		showName.addEventListener("onmouseover", function () {
-			singleShowDiv.style.color = "red";
-		});
-		showName.addEventListener("click", function () {
-			//singleShowDiv.style.color = "yellow";
-			//document.body.innerHTML = "";
-			//fetchSelectedShow(167);
-			//singleShowDiv.style.backgroundColor = " yellow";
-		});*/
 	});
 	function changNameColor() {
 		document.getElementsByTagName("h1").style.cursor = "pointer";
